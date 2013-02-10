@@ -26,6 +26,13 @@ class DebugTools:
 		@staticmethod
 		def getName(val):
 			return DebugTools.DEBUG_LEVEL.STRINGS[val]
+		@staticmethod
+		def getValue(val):
+			k = 3
+			for key, value in DebugTools.DEBUG_LEVEL.STRINGS.iteritems():
+				if value == val:
+					k = key
+			return k
 	
 	debugLevel = DEBUG_LEVEL.INFO
 	
