@@ -37,12 +37,12 @@ class DebugTools:
 	debugLevel = DEBUG_LEVEL.INFO
 	
 	@staticmethod
-	def println(arg, debugLevel = DEBUG_LEVEL.DEBUG):
+	def println(arg, debugLevel=DEBUG_LEVEL.DEBUG):
 		if debugLevel <= DebugTools.debugLevel:
 			print arg
 
 	@staticmethod
-	def printerr(arg, debugLevel = DEBUG_LEVEL.ERROR):
+	def printerr(arg, debugLevel=DEBUG_LEVEL.ERROR):
 		if debugLevel <= DebugTools.debugLevel:
 			n = DebugTools.DEBUG_LEVEL.getName(debugLevel)
 			if n is not None:
