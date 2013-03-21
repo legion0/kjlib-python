@@ -1,18 +1,6 @@
-import collections as local_collections
+from collections import MutableSet
 
-def import_non_local(name, custom_name=None):
-	import imp, sys
-
-	custom_name = custom_name or name
-
-	f, pathname, desc = imp.find_module(name, sys.path[1:])
-	module = imp.load_module(custom_name, f, pathname, desc)
-	f.close()
-
-	return module
-collections = import_non_local("collections")
-
-class OrderedSet(collections.MutableSet):
+class OrderedSet(MutableSet):
 
 		def __init__(self, iterable=None):
 				self.end = end = []
@@ -35,9 +23,9 @@ class OrderedSet(collections.MutableSet):
 
 		def discard(self, key):
 				if key in self.map:
-						key, prev, next = self.map.pop(key)
-						prev[2] = next
-						next[1] = prev
+						key, prev, _next = self.map.pop(key)
+						prev[2] = _next
+						_next[1] = prev
 
 		def __iter__(self):
 				end = self.end
