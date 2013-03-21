@@ -23,7 +23,7 @@ class Argument(object):
 	_FLAG = 0
 	_CHOICE = 1
 	_VALUE = 2
-	
+
 	def __init__(self, name, **kwargs):
 		"""
 		default
@@ -61,35 +61,11 @@ class Argument(object):
 			self.verify = kwargs["verify"]
 			if self.verify is None:
 				self.verify = _null_verify
+		self.hasPost = "post" in kwargs
+		if self.hasPost:
+			self.post = kwargs["post"]
 		self.help = kwargs["help"] if "help" in kwargs else self._defaultHelpMsg()
 		self.dependencies = set()
-#		
-#		
-#		if "choices" in kwargs and "verify" in kwargs:
-#			raise ValueError("Only choices or verify can be specified: %s." % name)
-#		self.optional = "default" in kwargs
-#		if self.optional:
-#			self.default = kwargs["default"]
-#		self.hasDefault = self.optional and self.default is not None
-#		self.name = name
-#		self.choices = kwargs["choices"] if "choices" in kwargs else None
-#		if "verify" in kwargs:
-#			self.verify = kwargs["verify"]
-#			if self.verify is None:
-#				self.verify = _null_verify
-#		elif self.choices is not None:
-#			self.verify = _ChoicesVerifier(self, self.choices)
-#		else:
-#			self.verify = None
-#		if self.hasDefault:
-#			self.default = kwargs["default"]
-#		self.metavar = kwargs["metavar"] if "metavar" in kwargs else self.name.upper()
-#		if self.verify is not None:
-#			self.type = Argument._VALUE
-#		else:
-#			self.type = Argument._FLAG
-#		self.help = kwargs["help"] if "help" in kwargs else self._defaultHelpMsg()
-#		self.dependencies = set()
 
 	def _defaultHelpMsg(self):
 		msg = []
@@ -152,7 +128,6 @@ class ArgumentParser(object):
 		self.origArgs.add(argument)
 		return argument
 
-
 	def _consume_args(self, args, namespace):
 		for arg in tuple(self.args):
 			try:
@@ -172,6 +147,11 @@ class ArgumentParser(object):
 				self.die(ex)
 			except ValueError as ex:
 				self.die(ex)
+
+	def _post_args(self, namespace):
+		for arg in self.args:
+			if arg.hasPost:
+				arg.post(arg.name, namespace[arg.name], namespace)
 
 	def _verify_dependencies(self):
 		for arg in self.args:
@@ -193,7 +173,8 @@ class ArgumentParser(object):
 			self.die("unrecognized argument %r." % args[0])
 		self._verify_dependencies()
 		self._verify_args(namespace)
-#		print repr(namespace)
+# 		print repr(namespace)
+		self._post_args(namespace)
 		return namespace
 
 
@@ -236,6 +217,9 @@ class ArgumentParser(object):
 		print >> sys.stderr, self.help()
 		exit(returncode)
 
+def invert_flag(newName):
+	return lambda argName, value, namespace: setattr(namespace, newName, not value) or delattr(namespace, argName.lower())
+
 parser = ArgumentParser()
 
 arg_excelFile = parser.add(Argument(
@@ -245,7 +229,8 @@ arg_excelFile = parser.add(Argument(
 ))
 arg_simulation = parser.add(Argument(
 	"write",
-	help="write protections to output directory (otherwise simulation is run)."
+	post=invert_flag("simulation"),
+	help="write protections to output directory (otherwise simulation is run).",
 ))
 arg_assurent = parser.add(Argument(
 	"assurent",
@@ -253,13 +238,13 @@ arg_assurent = parser.add(Argument(
 ))
 arg_verbosity = parser.add(Argument(
 	"verbosity",
-	choices=("A","B","C"),
-	default = "A",
+	choices=("A", "B", "C"),
+	default="A",
 	help="#{HELP}",
 ))
 
-options = parser.parse_args(["--excelfile", "--write"])
-#options = parser.parse_args(["--excelfile", "X"])
+options = parser.parse_args(["--excelfile", "X", "--write"])
+# options = parser.parse_args(["--excelfile", "X"])
 print repr(options)
 
 print >> sys.stderr, parser.help()
