@@ -1,4 +1,5 @@
-import inspect, imp, sys
+import imp
+import sys
 
 def import_non_local(name, custom_name=None):
 	custom_name = custom_name or name
@@ -8,5 +9,5 @@ def import_non_local(name, custom_name=None):
 
 	return module
 
-class ProgrammingError(Exception):
+class ProgrammingError(object):
 	pass
