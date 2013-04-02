@@ -1,7 +1,7 @@
-import sys
+import sys, json
 
 class DebugTools:
-	
+
 	class DEBUG_LEVEL:
 		QUIET = 0
 		FATAL = 1
@@ -20,8 +20,8 @@ class DebugTools:
 			5: 'DEBUG',
 			6: 'DEBUG2',
 			7: 'DEBUG3'
-			
-			
+
+
 		}
 		@staticmethod
 		def getName(val):
@@ -33,9 +33,9 @@ class DebugTools:
 				if value == val:
 					k = key
 			return k
-	
+
 	debugLevel = DEBUG_LEVEL.INFO
-	
+
 	@staticmethod
 	def println(arg, debugLevel=DEBUG_LEVEL.DEBUG):
 		if debugLevel <= DebugTools.debugLevel:
@@ -50,3 +50,13 @@ class DebugTools:
 			else:
 				n = ""
 			print >> sys.stderr, n + arg
+
+	@staticmethod
+	def die(arg, returncode = -1):
+		DebugTools.printerr(arg, DebugTools.DEBUG_LEVEL.FATAL)
+		exit(returncode)
+
+	@staticmethod
+	def pprint(arg):
+		print json.dumps(arg, indent=4)
+
