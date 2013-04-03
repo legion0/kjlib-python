@@ -1,11 +1,14 @@
 import sys
 
-__version__ = "1.01.00"
+__version__ = "1.02.00"
 
 def require(version):
-	currentVersion = sys.modules[__name__].__version__
+	currentVersion = __version__
+	require_lib(version, currentVersion, "PythonTools")
+
+def require_lib(version, currentVersion, libName):
 	if __compare_versions(version, currentVersion) > 0:
-		print >> sys.stderr, "This program requires PythonTools version: %s" % version
+		print >> sys.stderr, "This program requires %s version: %s" % (libName, version)
 		exit(-1)
 
 def __compare_versions(ver1, ver2):
