@@ -37,12 +37,12 @@ class DebugTools:
 	debugLevel = DEBUG_LEVEL.INFO
 
 	@staticmethod
-	def println(arg, debugLevel=DEBUG_LEVEL.DEBUG):
+	def println(arg="", debugLevel=DEBUG_LEVEL.DEBUG):
 		if debugLevel <= DebugTools.debugLevel:
 			print arg
 
 	@staticmethod
-	def printerr(arg, debugLevel=DEBUG_LEVEL.ERROR):
+	def printerr(arg="", debugLevel=DEBUG_LEVEL.ERROR):
 		if debugLevel <= DebugTools.debugLevel:
 			n = DebugTools.DEBUG_LEVEL.getName(debugLevel)
 			if n is not None:
@@ -52,11 +52,10 @@ class DebugTools:
 			print >> sys.stderr, n + arg
 
 	@staticmethod
-	def die(arg, returncode = -1):
+	def die(arg="", returncode= -1):
 		DebugTools.printerr(arg, DebugTools.DEBUG_LEVEL.FATAL)
 		exit(returncode)
 
 	@staticmethod
 	def pprint(arg):
 		print json.dumps(arg, indent=4)
-
