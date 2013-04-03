@@ -37,3 +37,6 @@ nosetests.xml
 
 # Job Specific #
 cr
+ccName
+.p2cc
+
