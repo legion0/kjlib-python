@@ -16,7 +16,7 @@ def printTable(matrix, printHeader=False, printRowId=False):
 	template = template % tuple(widths.values())
 	if printHeader:
 		print template % matrix[0]
-		print "-" * (sum([x + 2 for x in widths.itervalues()]))
+		print "-" * (sum([x + 3 for x in widths.itervalues()]) - 3)
 		matrix = matrix[1:]
 	for line in matrix:
 		print template % line
