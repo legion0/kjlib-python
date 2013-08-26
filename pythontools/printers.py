@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
-def printTable(matrix, printHeader=False, printRowId=False):
+def formatTable(matrix, printHeader=False, printRowId=False):
+	table_str = ""
 	widths = OrderedDict()
 	for lineNum in xrange(len(matrix)):
 		for colNum in xrange(len(matrix[lineNum])):
@@ -15,8 +16,13 @@ def printTable(matrix, printHeader=False, printRowId=False):
 	template = template.strip()
 	template = template % tuple(widths.values())
 	if printHeader:
-		print template % matrix[0]
-		print "-" * (sum([x + 3 for x in widths.itervalues()]) - 3)
+		table_str += template % matrix[0]
+		table_str += "\n"
+		table_str += ("-" * (sum([x + 3 for x in widths.itervalues()]) - 3))
+		table_str += "\n"
 		matrix = matrix[1:]
 	for line in matrix:
-		print template % line
+		table_str += template % line
+		table_str += "\n"
+	table_str = table_str[:-1]
+	return table_str
