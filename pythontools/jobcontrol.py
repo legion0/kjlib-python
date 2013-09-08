@@ -4,7 +4,7 @@ import math
 import random
 
 class JobControl:
-	
+
 	def __init__(self, totalJobs = 1):
 		self.totalJobs = totalJobs
 		self.jobs = 0
@@ -15,12 +15,11 @@ class JobControl:
 		n = max(1,math.ceil(float(self.totalJobs)/10))
 		self.a = float(2)/(n+1)
 		self.alphaChanged = False
-		
-	
+
 	def jobDone(self, amount = 1):
 		self.jobs = self.jobs + amount
 		diff = float(self.__now() - self.lastTime) / amount
-		
+
 		if self.getProgressPercent() >= 1 and not self.alphaChanged:
 			self.alphaChanged = True
 			self.a = float(2)/(self.totalJobs+1)
@@ -29,22 +28,22 @@ class JobControl:
 		else:
 			self.avgTime = self.a * diff + (1-self.a) * self.avgTime
 		self.lastTime = self.__now()
-	
+
 	def __now(self):
 		return int(time.time()*1000)
 
 	def getProgress(self):
 		return float(self.jobs) / self.totalJobs
-	
+
 	def getProgressPercent(self):
 		return int(self.getProgress()*100)
-	
+
 	def getProgressFormatted(self):
 		return str(self.getProgressPercent()) + "%"
-	
+
 	def getETA(self):
 		return int(self.avgTime * (self.totalJobs - self.jobs))
-	
+
 	def getETAFormatted(self):
 		t = float(self.getETA())
 		msecs = math.floor(t%1000)

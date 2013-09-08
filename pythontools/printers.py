@@ -26,3 +26,6 @@ def formatTable(matrix, printHeader=False, printRowId=False):
 		table_str += "\n"
 	table_str = table_str[:-1]
 	return table_str
+
+def format_table(matrix, print_header=False, print_row_id=False):
+	return formatTable(matrix, printHeader=print_header, printRowId=print_row_id)

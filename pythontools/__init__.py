@@ -1,6 +1,6 @@
 import sys
 
-__version__ = "1.04.01"
+__version__ = "1.05.01"
 
 def require(version):
 	currentVersion = __version__

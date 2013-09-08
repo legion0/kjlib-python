@@ -10,6 +10,17 @@ stdall_fpath = os.path.join(logdir, "stdall")
 stdout_fpath = os.path.join(logdir, "stdout")
 stderr_fpath = os.path.join(logdir, "stderr")
 
+import json
+try:
+	import jsbeautifier
+	jsbeautifierOptions = jsbeautifier.default_options()
+	jsbeautifierOptions.indent_with_tabs = True
+	jsbeautifierOptions.preserve_newlines = False
+	beautifier = jsbeautifier.Beautifier(jsbeautifierOptions)
+	pretty_dumper = lambda o: beautifier.beautify(json.dumps(o))
+except ImportError:
+	pretty_dumper = lambda o: json.dumps(o, indent=4)
+
 if not os.path.exists(logdir):
 	os.makedirs(logdir)
 for fpath in (stdout_fpath, stderr_fpath, stdall_fpath):
@@ -93,16 +104,19 @@ class DebugTools:
 	def pprint(arg):
 		print json.dumps(arg, indent=4)
 
-import json
-try:
-	import jsbeautifier
-	jsbeautifierOptions = jsbeautifier.default_options()
-	jsbeautifierOptions.indent_with_tabs = True
-	jsbeautifierOptions.preserve_newlines = False
-	beautifier = jsbeautifier.Beautifier(jsbeautifierOptions)
-	pretty_dumper = lambda o: beautifier.beautify(json.dumps(o))
-except ImportError:
-	pretty_dumper = lambda o: json.dumps(o, indent=4)
-
 def dumps(o):
 	return pretty_dumper(o)
+
+def pause(seconds = sys.maxint):
+	print "Pausing for %r seconds, press Ctrl+C to continue."
+	try:
+		time.sleep(seconds)
+	except KeyboardInterrupt:
+		pass
+
+def die(errorMsg, returncode=-1):
+	if returncode != 0:
+		print >> sys.stderr, errorMsg
+	else:
+		print errorMsg
+	exit(returncode)
