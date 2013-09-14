@@ -1,16 +1,23 @@
-import sys, os, time
 from datetime import datetime
 from glob import glob
-
 import __main__
-app_name = os.path.splitext(os.path.basename(__main__.__file__))[0]
-homedir = os.path.expanduser("~")
-logdir = os.path.join(homedir, ".cache", app_name, "logs")
-stdall_fpath = os.path.join(logdir, "stdall")
-stdout_fpath = os.path.join(logdir, "stdout")
-stderr_fpath = os.path.join(logdir, "stderr")
-
 import json
+import sys
+import os
+import time
+
+if hasattr(__main__, "__APP_NAME__"):
+	app_name = __main__.__APP_NAME__
+else:
+	app_name = os.path.splitext(os.path.basename(__main__.__file__))[0]
+HOME_DIR = os.path.expanduser("~")
+LOG_DIR = os.path.join(HOME_DIR, ".logs", app_name)
+CACHE_DIR = os.path.join(HOME_DIR, ".cache", app_name)
+DATA_DIR = os.path.join(HOME_DIR, ".data", app_name)
+stdall_fpath = os.path.join(LOG_DIR, "stdall")
+stdout_fpath = os.path.join(LOG_DIR, "stdout")
+stderr_fpath = os.path.join(LOG_DIR, "stderr")
+
 try:
 	import jsbeautifier
 	jsbeautifierOptions = jsbeautifier.default_options()
@@ -21,8 +28,10 @@ try:
 except ImportError:
 	pretty_dumper = lambda o: json.dumps(o, indent=4)
 
-if not os.path.exists(logdir):
-	os.makedirs(logdir)
+for dir_path in (LOG_DIR, CACHE_DIR, DATA_DIR):
+	if not os.path.exists(dir_path):
+		os.makedirs(dir_path)
+
 for fpath in (stdout_fpath, stderr_fpath, stdall_fpath):
 	if os.path.exists(fpath):
 		ctime = datetime.fromtimestamp((os.path.getmtime(fpath)))
