@@ -55,6 +55,10 @@ class JobControl:
 		mins -= hours * 60
 		return "%02u:%02u:%02u.%03u" % (hours, mins, secs, msecs)
 
+	def getFormatted(self):
+		progressStr = "{}/{}".format(self.jobs, self.totalJobs)
+		return "{} ({}) ETA:{}".format(progressStr, self.getProgressFormatted(), self.getETAFormatted())
+
 def test():
 	N = 100
 	DELAY = 100
