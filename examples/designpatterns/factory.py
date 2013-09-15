@@ -1,4 +1,4 @@
-from pythontools.designpatterns import factory
+from kjlib.designpatterns import factory
 import re
 
 class A:
