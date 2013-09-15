@@ -9,5 +9,5 @@ setup(name='kjlib',
       author='K Jonathan',
       author_email='phenixdoc@gmail.com',
       packages=['kjlib'],
-	  url=r"https://github.com/legion0/kjpythonlib"
+	  url=r"https://github.com/legion0/kjlib-python"
      )
