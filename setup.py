@@ -8,5 +8,6 @@ setup(name='kjlib',
       description='Reusable Python Modules',
       author='K Jonathan',
       author_email='phenixdoc@gmail.com',
-      packages=['kjlib']
+      packages=['kjlib'],
+	  url=r"https://github.com/legion0/kjpythonlib"
      )
