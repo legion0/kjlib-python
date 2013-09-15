@@ -10,7 +10,7 @@ if hasattr(__main__, "__APP_NAME__"):
 	app_name = __main__.__APP_NAME__
 else:
 	app_name = os.path.splitext(os.path.basename(__main__.__file__))[0]
-HOME_DIR = os.path.expanduser("~")
+HOME_DIR = os.getenv('USERPROFILE') or os.path.expanduser("~")
 LOG_DIR = os.path.join(HOME_DIR, ".logs", app_name)
 CACHE_DIR = os.path.join(HOME_DIR, ".cache", app_name)
 DATA_DIR = os.path.join(HOME_DIR, ".data", app_name)
