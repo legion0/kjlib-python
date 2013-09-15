@@ -15,6 +15,7 @@ class JobControl:
 		n = max(1,math.ceil(float(self.totalJobs)/10))
 		self.a = float(2)/(n+1)
 		self.alphaChanged = False
+		self.lastUpdatePercent = None
 
 	def jobDone(self, amount = 1):
 		self.jobs = self.jobs + amount
@@ -59,6 +60,14 @@ class JobControl:
 		progressStr = "{}/{}".format(self.jobs, self.totalJobs)
 		return "{} ({}) ETA:{}".format(progressStr, self.getProgressFormatted(), self.getETAFormatted())
 
+	def getUpdateFormatted(self):
+		percent = self.getProgressPercent()
+		if percent != self.lastUpdatePercent:
+			self.lastUpdatePercent = percent
+			return self.getFormatted()
+		else:
+			return None
+
 def test():
 	N = 100
 	DELAY = 100
@@ -73,3 +82,4 @@ def test():
 
 if __name__ == '__main__':
 	test()
+
