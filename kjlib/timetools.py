@@ -10,57 +10,38 @@ from datetime import datetime
 from datetime import timedelta
 import time
 
-class TimeTools:
-	
-	@staticmethod
-	def getDateTimeTuple(dateTimeObj):
-		return dateTimeObj.timetuple()[0:6] + (dateTimeObj.microsecond/1000,)
-	
-	@staticmethod
-	def getNowTuple():
-		return TimeTools.getDateTimeTuple(datetime.now())
-	
-	@staticmethod
-	def formatDate(year, month, day):
-		return "%04u/%02u/%02u" % (year, month, day)
+def format_datetime(datetime_instance = None, format_string = "%Y/%m/%d %H:%M:%S"):
+	if datetime_instance is None:
+		datetime_instance = datetime.now()
+	return datetime_instance.strftime(format_string)
 
-	@staticmethod
-	def formatTime(hours, minutes, seconds, miliseconds):
-		return "%02u:%02u:%02u.%03u" % (hours, minutes, seconds, miliseconds)
-
-	@staticmethod
-	def formatDateTime(year, month, day, hours, minutes, seconds, miliseconds):
-		return TimeTools.formatDate(year, month, day) + " " + TimeTools.formatTime(hours, minutes, seconds, miliseconds)
+def format_timestamp(datetime_instance = None, format_string = "%Y%m%d_%H%M%S"):
+	return format_datetime(datetime_instance, format_string)
 	
-	@staticmethod
-	def formatNow():
-		return TimeTools.formatDateTime(*TimeTools.getNowTuple())
-	
-	@staticmethod
-	def formatDelta(delta):
-		neg = delta.days < 0
-		days = delta.days if not neg else -delta.days
-		print days
-		hours, t = divmod(delta.seconds, 60*60)
-		hours = hours + days * 24
-		minutes, t = divmod(t, 60)
-		seconds = t
-		miliseconds = delta.microseconds / 1000
-		string = TimeTools.formatTime(hours, minutes, seconds, miliseconds)
-		if neg:
-			return "-" + string
-		return string
+def format_delta(delta):
+	abs_delta = abs(delta)
+	neg = abs_delta > delta
+	delta = abs_delta
+	days = delta.days
+	hours, t = divmod(delta.seconds, 60*60)
+	hours += days*24
+	minutes, seconds = divmod(t, 60)
+	miliseconds = delta.microseconds / 1000
+	res_str = "%02u:%02u:%02u.%03u" %(hours, minutes, seconds, miliseconds)
+	if neg:
+		res_str = "-" + res_str
+	return res_str
 
 class Timer():
 	def __init__(self):
 		self.reset()
 	
 	def start(self):
-		self.startTime = datetime.now()
+		self.start_time = datetime.now()
 	
 	def end(self):
 		end = datetime.now()
-		self.total = self.total + (end - self.startTime)
+		self.total = self.total + (end - self.start_time)
 		return self.total
 	
 	def reset(self):
@@ -68,20 +49,20 @@ class Timer():
 		
 
 def main(args):
-	print TimeTools.formatNow()
+	print format_datetime()
 	timer = Timer()
 	timer.start()
 	time.sleep(1.1009)
 	print 0-(timer.end()*-1)
 	print -timer.end()
-	print TimeTools.formatDelta(timer.end())
-	print TimeTools.formatNow()
+	print format_delta(timer.end())
+	print format_datetime()
 	timer.reset()
 	print repr(timer)
 	timer.start()
 	time.sleep(2.1009)
-	print TimeTools.formatDelta(timer.end())
-	print TimeTools.formatNow()
+	print format_delta(timer.end())
+	print format_datetime()
 
 if __name__ == '__main__':
 	main(sys.argv[1:])
