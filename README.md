@@ -5,6 +5,7 @@ Reusable python modules and classes
 
 Importing:
 
+```
 try:
 	import kjlib
 	kjlib.require("1.6.0")
@@ -16,3 +17,4 @@ try:
 except ImportError:
 	print >> sys.stderr, "Please install kjlib python library (available at pypi)."
 	exit(-1)
+```
