@@ -1,7 +1,10 @@
 import time
+from datetime import timedelta
 import math
 
 import random
+
+from kjlib.timetools import format_delta
 
 class JobControl:
 
@@ -46,15 +49,8 @@ class JobControl:
 		return int(self.avgTime * (self.totalJobs - self.jobs))
 
 	def getETAFormatted(self):
-		t = float(self.getETA())
-		msecs = math.floor(t%1000)
-		t -= msecs
-		secs = math.floor(t/1000)
-		mins = math.floor(secs / 60)
-		secs -= mins*60
-		hours = math.floor(mins / 60)
-		mins -= hours * 60
-		return "%02u:%02u:%02u.%03u" % (hours, mins, secs, msecs)
+		delta = timedelta(seconds = self.getETA())
+		return format_delta(delta)
 
 	def getFormatted(self):
 		progressStr = "{}/{}".format(self.jobs, self.totalJobs)
