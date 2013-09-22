@@ -32,18 +32,22 @@ for dir_path in (LOG_DIR, CACHE_DIR, DATA_DIR):
 	if not os.path.exists(dir_path):
 		os.makedirs(dir_path)
 
-for fpath in (stdout_fpath, stderr_fpath, stdall_fpath):
-	if os.path.exists(fpath):
-		ctime = datetime.fromtimestamp((os.path.getmtime(fpath)))
+def rotate_file(file_path, retain = None):
+	if os.path.exists(file_path):
+		ctime = datetime.fromtimestamp((os.path.getmtime(file_path)))
 		ts = ctime.strftime("%Y%m%d_%H%M%S")
-		backup_path = "%s_%s" % (fpath, ts)
+		backup_path = "%s_%s" % (file_path, ts)
 		#print fpath, backup_path
-		os.rename(fpath, backup_path)
-	with open(fpath, "w"):
+		os.rename(file_path, backup_path)
+	with open(file_path, "w"):
 		pass
-	old_files = sorted(glob(fpath + "*"))[1:-30]
-	for old_file in old_files:
-		os.remove(old_file)
+	if retain is not None:
+		old_files = sorted(glob(file_path + "*"))[1:-30]
+		for old_file in old_files:
+			os.remove(old_file)
+
+for fpath in (stdout_fpath, stderr_fpath, stdall_fpath):
+	rotate_file(fpath, retain=30)
 
 class DebugTools:
 
