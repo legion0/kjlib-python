@@ -1,4 +1,5 @@
 from collections import MutableSet, OrderedDict
+import sys
 
 class HashableOrderedDict(OrderedDict):
 	def __hash__(self):
@@ -66,9 +67,12 @@ class OrderedSet(MutableSet):
 		return set(self) == set(other)
 
 
-if __name__ == '__main__':
+def _test(argv):
 	s = OrderedSet('abracadaba')
 	t = OrderedSet('simsalabim')
 	print(s | t)
 	print(s & t)
 	print(s - t)
+
+if __name__ == '__main__':
+	_test(sys.argv[1:])

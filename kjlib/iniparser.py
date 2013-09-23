@@ -1,6 +1,6 @@
 import os, re
 
-RE_BLOCK = "^\s*\[([^]]+)\]\s*$"
+_RE_BLOCK = "^\s*\[([^]]+)\]\s*$"
 
 class IniParser:
 	@staticmethod
@@ -10,7 +10,7 @@ class IniParser:
 		with open(filePath, "r") as f:
 			content = f.read()
 		d = {}
-		content = re.split(RE_BLOCK, content, 0, re.MULTILINE)[1:]
+		content = re.split(_RE_BLOCK, content, 0, re.MULTILINE)[1:]
 		sections = zip(content[0::2], content[1::2])
 		for sectionName, sectionContent in sections:
 			dd = {}

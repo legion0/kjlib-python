@@ -1,81 +1,87 @@
-import time
-from datetime import timedelta
+from .timetools import format_delta, format_datetime
+from datetime import datetime, timedelta
 import math
-
 import random
-
-from kjlib.timetools import format_delta
+import sys
+import time
 
 class JobControl:
 
-	def __init__(self, totalJobs = 1):
-		self.totalJobs = totalJobs
-		self.jobs = 0
-		self.avgTime = None
-		self.lastTime = self.__now()
-#		self.N = min(10, math.ceil(float(self.totalJobs)/10))
-#		self.N = min(1000, self.totalJobs)
-		n = max(1,math.ceil(float(self.totalJobs)/10))
-		self.a = float(2)/(n+1)
-		self.alphaChanged = False
-		self.lastUpdatePercent = None
+	def __init__(self, total_jobs=1):
+		self._total_jobs = total_jobs
+		self._finished_jobs = 0
+		self._average_time = None
+		self._last_time = self._now()
+# 		self.N = min(10, math.ceil(float(self._total_jobs)/10))
+# 		self.N = min(1000, self._total_jobs)
+		n = max(1, math.ceil(float(self._total_jobs) / 10))
+		self._alpha = float(2) / (n + 1)
+		self._alpha_changed = False
+		self._last_update_percent = None
 
-	def jobDone(self, amount = 1):
-		self.jobs = self.jobs + amount
-		diff = float(self.__now() - self.lastTime) / amount
+	def done(self, amount=1):
+		self._finished_jobs = self._finished_jobs + amount
+		diff = float(self._now() - self._last_time) / amount
 
-		if self.getProgressPercent() >= 1 and not self.alphaChanged:
-			self.alphaChanged = True
-			self.a = float(2)/(self.totalJobs+1)
-		if self.avgTime is None:
-			self.avgTime = diff
+		if self.get_percent() >= 1 and not self._alpha_changed:
+			self._alpha_changed = True
+			self._alpha = float(2) / (self._total_jobs + 1)
+		if self._average_time is None:
+			self._average_time = diff
 		else:
-			self.avgTime = self.a * diff + (1-self.a) * self.avgTime
-		self.lastTime = self.__now()
+			self._average_time = self._alpha * diff + (1 - self._alpha) * self._average_time
+		self._last_time = self._now()
 
-	def __now(self):
-		return int(time.time()*1000)
+	def _now(self):
+		return int(time.time() * 1000)
 
-	def getProgress(self):
-		return float(self.jobs) / self.totalJobs
+	def get_progress(self):
+		return float(self._finished_jobs) / self._total_jobs
 
-	def getProgressPercent(self):
-		return int(self.getProgress()*100)
+	def get_progress_formatted(self):
+		return "{}/{}".format(self._finished_jobs, self._total_jobs)
 
-	def getProgressFormatted(self):
-		return str(self.getProgressPercent()) + "%"
+	def get_percent(self):
+		return int(self.get_progress() * 100)
 
-	def getETA(self):
-		return int(self.avgTime * (self.totalJobs - self.jobs))
+	def get_percent_formatted(self):
+		return "%u%%" % self.get_percent()
 
-	def getETAFormatted(self):
-		delta = timedelta(seconds = self.getETA())
-		return format_delta(delta)
+	def get_time_remaining(self):
+		seconds_remaining = int(self._average_time * (self._total_jobs - self._finished_jobs))
+		return timedelta(seconds=seconds_remaining)
 
-	def getFormatted(self):
-		progressStr = "{}/{}".format(self.jobs, self.totalJobs)
-		return "{} ({}) ETA:{}".format(progressStr, self.getProgressFormatted(), self.getETAFormatted())
+	def get_eta(self):
+		return datetime.now() + self.get_time_remaining()
 
-	def getUpdateFormatted(self):
-		percent = self.getProgressPercent()
-		if percent != self.lastUpdatePercent:
-			self.lastUpdatePercent = percent
-			return self.getFormatted()
+	def get_time_remaining_formatted(self):
+		return format_delta(self.get_time_remaining())
+
+	def get_eta_formatted(self):
+		return format_datetime(self.get_eta())
+
+	def get_formatted(self):
+		return "{} ({}) ETA:{}".format(self.get_percent_formatted(), self.get_progress_formatted(), self.get_eta_formatted())
+
+	def get_formatted_if_updated(self):
+		percent = self.get_percent()
+		if percent != self._last_update_percent:
+			self._last_update_percent = percent
+			return self.get_formatted()
 		else:
 			return None
 
-def test():
+def _test():
 	N = 100
 	DELAY = 100
 	RAND = 99
 	jc = JobControl(N)
-	for i in xrange(N):
-		milis = DELAY + (random.random()-0.5)*RAND
-		time.sleep(milis/1000)
-		jc.jobDone()
-		#print jc.getProgressFormatted()
-		print jc.getETAFormatted()
+	for _ in xrange(N):
+		milis = DELAY + (random.random() - 0.5) * RAND
+		time.sleep(milis / 1000)
+		jc.done()
+		# print jc.get_percent_formatted()
+		print jc.get_time_remaining_formatted()
 
 if __name__ == '__main__':
-	test()
-
+	_test(sys.argv[1:])

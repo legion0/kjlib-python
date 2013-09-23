@@ -1,14 +1,14 @@
 import sys
 
-__version__ = "1.07.01"
+__version__ = "2.00.00"
 
-def require(version):
-	currentVersion = __version__
-	require_lib(version, currentVersion, "PythonTools")
+def require(required_version):
+	current_version = __version__
+	require_lib("kjlib", required_version, current_version)
 
-def require_lib(version, currentVersion, libName):
-	if __compare_versions(version, currentVersion) > 0:
-		print >> sys.stderr, "This program requires %s version: %s" % (libName, version)
+def require_lib(lib_name, required_version, available_version):
+	if __compare_versions(required_version, available_version) > 0:
+		print >> sys.stderr, "This program requires %s required_version: %s" % (lib_name, required_version)
 		exit(-1)
 
 def __compare_versions(ver1, ver2):
@@ -23,8 +23,8 @@ def __compare_versions(ver1, ver2):
 	elif l2 < l1:
 		parts2.extend([0] * sizeDiff)
 	for i in xrange(maxSize):
-		if int(parts1[i]) > int(parts2[i]):
+		if parts1[i] > parts2[i]:
 			return 1
-		elif int(parts1[i]) < int(parts2[i]):
+		elif parts1[i] < parts2[i]:
 			return -1
 	return 0
