@@ -12,20 +12,21 @@ if hasattr(__main__, "__APP_NAME__"):
 else:
 	_app_name = os.path.splitext(os.path.basename(__main__.__file__))[0]
 if hasattr(__main__, "__VERSION__"):
-	_app_version = re.sub(r"[^a-z0-9.]+", "_", __main__.__VERSION__, re.IGNORECASE).lower()
+	_app_major_minor_version = re.sub(r"[^a-z0-9.]+", "_", __main__.__VERSION__, re.IGNORECASE).lower()
+	_app_major_minor_version = '.'.join(_app_major_minor_version.split(".")[:2])
 else:
-	_app_version = None
+	_app_major_minor_version = None
 
 HOME_DIR = os.getenv('USERPROFILE') or os.path.expanduser("~")  # prefer windows USERPROFILE for windows/cygwin mixes
 CONFIG_DIR = os.path.join(HOME_DIR, ".config", _app_name)
 LOG_DIR = os.path.join(HOME_DIR, ".logs", _app_name)
 CACHE_DIR = os.path.join(HOME_DIR, ".cache", _app_name)
 DATA_DIR = os.path.join(HOME_DIR, ".data", _app_name)
-if _app_version is not None:
-	LOG_DIR = os.path.join(LOG_DIR, _app_version)
-	CACHE_DIR = os.path.join(CACHE_DIR, _app_version)
-	DATA_DIR = os.path.join(DATA_DIR, _app_version)
-	CONFIG_DIR = os.path.join(CONFIG_DIR, _app_version)
+if _app_major_minor_version is not None:
+	LOG_DIR = os.path.join(LOG_DIR, _app_major_minor_version)
+	CACHE_DIR = os.path.join(CACHE_DIR, _app_major_minor_version)
+	DATA_DIR = os.path.join(DATA_DIR, _app_major_minor_version)
+	CONFIG_DIR = os.path.join(CONFIG_DIR, _app_major_minor_version)
 
 stdall_fpath = os.path.join(LOG_DIR, "stdall")
 stdout_fpath = os.path.join(LOG_DIR, "stdout")
