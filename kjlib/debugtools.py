@@ -17,6 +17,7 @@ else:
 	_app_version = None
 
 HOME_DIR = os.getenv('USERPROFILE') or os.path.expanduser("~")  # prefer windows USERPROFILE for windows/cygwin mixes
+CONFIG_DIR = os.path.join(HOME_DIR, ".config", _app_name)
 LOG_DIR = os.path.join(HOME_DIR, ".logs", _app_name)
 CACHE_DIR = os.path.join(HOME_DIR, ".cache", _app_name)
 DATA_DIR = os.path.join(HOME_DIR, ".data", _app_name)
@@ -24,6 +25,7 @@ if _app_version is not None:
 	LOG_DIR = os.path.join(LOG_DIR, _app_version)
 	CACHE_DIR = os.path.join(CACHE_DIR, _app_version)
 	DATA_DIR = os.path.join(DATA_DIR, _app_version)
+	CONFIG_DIR = os.path.join(CONFIG_DIR, _app_version)
 
 stdall_fpath = os.path.join(LOG_DIR, "stdall")
 stdout_fpath = os.path.join(LOG_DIR, "stdout")
@@ -39,7 +41,7 @@ try:
 except ImportError:
 	pretty_dumper = lambda o: json.dumps(o, indent=4)
 
-for dir_path in (LOG_DIR, CACHE_DIR, DATA_DIR):
+for dir_path in (LOG_DIR, CACHE_DIR, DATA_DIR, CONFIG_DIR):
 	if not os.path.exists(dir_path):
 		os.makedirs(dir_path)
 
