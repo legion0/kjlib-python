@@ -87,6 +87,9 @@ class Config(object):
 	def __del__(self):
 		pass
 
+	def __repr__(self):
+		return self._config.__repr__()
+
 class Data(object):
 
 	_ALL_ERRORS = (AttributeError, ValueError, TypeError, IndexError, KeyError)
@@ -174,6 +177,9 @@ class Data(object):
 	def __del__(self):
 		with open(self._path, "wb") as f:
 			f.write(msgpack.packb(self._data))
+
+	def __repr__(self):
+		return self._data.__repr__()
 
 def _raise_key_error(*args, **kw_args):
 	if "message" in kw_args:
