@@ -172,7 +172,7 @@ class Data(object):
 				last_part = int(last_part)
 				pointer[last_part] = value
 		except Data._ALL_ERRORS:
-			_raise_key_error(last_part, key, message="%r is not a valid key in the path %r." % (last_part, key))
+			_raise_key_error(last_part, key, message="%s is not a valid key in the path %s." % (last_part, key))
 
 	def __del__(self):
 		with open(self._path, "wb") as f:
