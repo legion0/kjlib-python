@@ -31,6 +31,8 @@ for dir_path in (LOG_DIR, CACHE_DIR, DATA_DIR, CONFIG_DIR):
 	if not os.path.exists(dir_path):
 		os.makedirs(dir_path)
 
+_NO_ARG = []
+
 class Config(object):
 
 	_ALL_ERRORS = (AttributeError, ValueError, TypeError, IndexError, KeyError)
@@ -64,7 +66,7 @@ class Config(object):
 		except ValueError as e:
 			_raise_value_error(self._path, message=e.message)
 
-	def get(self, key=None, default=None):
+	def get(self, key=None, default=_NO_ARG):
 		if key is None:
 			return self._config
 		parts = key.split("/")
@@ -76,7 +78,10 @@ class Config(object):
 				except TypeError:
 					pointer = pointer[int(part)]
 			except Config._ALL_ERRORS:
-				return None
+				if default is _NO_ARG:
+					_raise_key_error(part, key, message="%s is not a valid key in the path %s." % (part, key))
+				else:
+					return default
 		return pointer
 
 	def __del__(self):
@@ -110,7 +115,7 @@ class Data(object):
 		with open(self._path, "rb") as f:
 			self._data = msgpack.unpackb(f.read())
 
-	def get(self, key=None, default=None):
+	def get(self, key=None, default=_NO_ARG):
 		"""
 		key is a forward slash (/) separated path describing the key to get a value for.
 		"""
@@ -126,7 +131,10 @@ class Data(object):
 					part = int(part)
 					pointer = pointer[part]
 			except Data._ALL_ERRORS:
-				return None
+				if default is _NO_ARG:
+					_raise_key_error(part, key, message="%s is not a valid key in the path %s." % (part, key))
+				else:
+					return default
 		return pointer
 
 	def set(self, key, value=None):
@@ -138,9 +146,9 @@ class Data(object):
 		try:
 			msgpack.packb(value)  # raise error is value is not serializable
 		except TypeError:
-			_raise_type_error(value, message="%r is not serializable." % value)
-		if value is None:
-			self._data = key
+			_raise_type_error(value, message="%s is not serializable." % value)
+		if key is None:
+			self._data = value
 			return
 		parts = key.split("/")
 		last_part = parts[-1]
@@ -153,7 +161,7 @@ class Data(object):
 				pointer[part] = {}
 				pointer = pointer[part]
 			except Data._ALL_ERRORS:
-				_raise_key_error(part, key, message="%r is not a valid key in the path %r." % (part, key))
+				_raise_key_error(part, key, message="%s is not a valid key in the path %s." % (part, key))
 		try:
 			try:
 				pointer[last_part] = value
