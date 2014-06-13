@@ -1,9 +1,40 @@
 from datetime import datetime
 from glob import glob
+import inspect
+from json import dumps as json_dumps
 import os
 import sys
 
 from kjlib.app_dirs import AppDirs
+import time
+
+_frame_to_inspect = 5
+
+def _get_caller_info(frame_to_inspect):
+	stack = inspect.stack()
+	frame = stack[frame_to_inspect]
+	frame_info = inspect.getframeinfo(frame[0])
+	module = inspect.getmodule(frame[0])
+	caller_info = {
+		"module_name": module.__name__,
+		"file_path": frame[1],
+		"line_number": frame[2],
+		"function_name": frame_info.function
+	}
+	return caller_info
+
+def _compose_log_msg(msg_text, log_level, frame_to_inspect = _frame_to_inspect):
+	log_obj = _get_caller_info(frame_to_inspect)
+	log_obj["time"] = time.time()
+	log_obj["level"] = log_level
+	log_level_name = Logger._log_level_name(log_level)
+	log_obj["level_str"] = log_level_name
+	log_obj["msg_text"] = str(msg_text)
+	return log_obj
+
+def _format_log_msg(log_obj):
+	return json_dumps(log_obj)
+
 
 class Logger(object):
 	QUIET   = 0
@@ -16,25 +47,30 @@ class Logger(object):
 	DEBUG2  = 7
 	DEBUG3  = 8
 
-	__LOG_LEVEL_TO_STRING = {
-		0: 'QUIET'  ,
-		1: 'FATAL'  ,
-		2: 'ERROR'  ,
-		3: 'WARN'   ,
-		4: 'INFO'   ,
-		5: 'VERBOSE',
-		6: 'DEBUG'  ,
-		7: 'DEBUG2' ,
-		8: 'DEBUG3' ,
+	_LOG_LEVEL_TO_STRING = {
+		QUIET   : 'QUIET'  ,
+		FATAL   : 'FATAL'  ,
+		ERROR   : 'ERROR'  ,
+		WARN    : 'WARN'   ,
+		INFO    : 'INFO'   ,
+		VERBOSE : 'VERBOSE',
+		DEBUG   : 'DEBUG'  ,
+		DEBUG2  : 'DEBUG2' ,
+		DEBUG3  : 'DEBUG3' ,
 	}
 
-	__MAX_WIDTH = max([len(x) for x in __LOG_LEVEL_TO_STRING.values()])
-	__LOG_TEMPLATE = "%%-%ds | %%s" % __MAX_WIDTH
+	_LOG_LEVEL_STRING_TO_VALUE = {
+		'QUIET'  : QUIET  ,
+		'FATAL'  : FATAL  ,
+		'ERROR'  : ERROR  ,
+		'WARN'   : WARN   ,
+		'INFO'   : INFO   ,
+		'VERBOSE': VERBOSE,
+		'DEBUG'  : DEBUG  ,
+		'DEBUG2' : DEBUG2 ,
+		'DEBUG3' : DEBUG3 ,
+	}
 
-	@staticmethod
-	def __get_log_level_name(log_level):
-		return Logger.__LOG_LEVEL_TO_STRING[log_level]
-# 
 	__instance = None
 	@staticmethod
 	def instance(*args, **kwargs):
@@ -54,12 +90,8 @@ class Logger(object):
 
 		self.__retain = retain
 	
-		self.__stdall_file_path = os.path.join(self.__LOG_DIR, "stdall")
-		self.__stdout_file_path = os.path.join(self.__LOG_DIR, "stdout")
-		self.__stderr_file_path = os.path.join(self.__LOG_DIR, "stderr")
-
-		for file_path in (self.__stdout_file_path, self.__stderr_file_path, self.__stdall_file_path):
-			self.__rotate_file(file_path)
+		self._log_file_path = os.path.join(self.__LOG_DIR, "log")
+		self.__rotate_file(self._log_file_path)
 
 		self.__print_level = print_level
 
@@ -88,17 +120,23 @@ class Logger(object):
 		if log_level <= self.__print_level:
 			print msg
 
-	def __log(self, msg, log_level):
-		log_level_name = Logger.__get_log_level_name(log_level)
-		with open(self.__stdout_file_path, "a") as f:
-			print >> f, Logger.__LOG_TEMPLATE % (log_level_name, msg)
-		with open(self.__stdall_file_path, "a") as f:
-			print >> f, Logger.__LOG_TEMPLATE % (log_level_name, msg)
+	def _log_msg(self, log_obj, file_):
+		log_msg = _format_log_msg(log_obj)
+		print >> file_, log_msg
+
+	def __log(self, msg_text, log_level):
+		log_obj = _compose_log_msg(msg_text, log_level, )
+		
+		log_msg = _format_log_msg(log_obj)
+
+		with open(self._log_file_path, "a") as f:
+			print >> f, log_msg
 
 	def __printerr(self, msg, log_level):
 		self.__log(msg, log_level)
 		if log_level <= self.__print_level:
-			print >> sys.stderr, msg
+			log_level_name = Logger._log_level_name(log_level)
+			print >> sys.stderr, "%s: %s" % (log_level_name, msg)
 
 	def __rotate_file(self, file_path):
 		if os.path.exists(file_path):
@@ -112,3 +150,7 @@ class Logger(object):
 			old_files = sorted(glob(file_path + "*"))[1:-self.__retain]
 			for old_file in old_files:
 				os.remove(old_file)
+
+	@staticmethod
+	def _log_level_name(log_level):
+		return Logger._LOG_LEVEL_TO_STRING[log_level]

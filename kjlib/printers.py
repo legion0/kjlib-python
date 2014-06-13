@@ -1,5 +1,8 @@
-from collections import OrderedDict
 import sys
+
+
+def format_cli_title(title):
+	return ("#" * 80) + "\n" + "#" + (" " * 9) + title + "\n" + ("#" * 80)
 
 def format_table(table_tuples, print_header=False, print_row_id=False):
 	table_str = ""

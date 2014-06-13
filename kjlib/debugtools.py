@@ -1,9 +1,8 @@
 import json
+import os
 import sys
 import time
 
-# from kjlib.logger import Logger
-# __logger = Logger.instance()
 
 __logger = None
 
@@ -17,9 +16,10 @@ def die(msg="", exit_code=1):
 	__import_logger()
 	if exit_code != 0:
 		__logger.f(msg)
+		os._exit(exit_code)
 	else:
 		__logger.i(msg)
-	exit(exit_code)
+		exit(exit_code)
 
 def verify(condition, msg, exit_code=1):
 	if not condition:

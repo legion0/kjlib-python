@@ -14,7 +14,8 @@ class WorkersPool(BackgroundWorker):
 		self.__callback = callback
 		self.__queue = deque()
 		self.__worker_threads = None
-		self.__working_threads = 0
+		self.__alive_threads = 0
+		self.__running_threads = 0
 		self.__outstanding_ops = 0
 
 	def add(self, element):
@@ -31,8 +32,8 @@ class WorkersPool(BackgroundWorker):
 				thread = Thread(target=self._run, name=thread_name, args=(thread_index,))
 				thread.start()
 				self.__worker_threads.append(thread)
-				self.__working_threads += 1
-			pass
+			self.__alive_threads = self.__num_of_threads
+			self.__running_threads = self.__num_of_threads
 
 	def _run(self, thread_index):
 		while self._checkpoint() != ThreadState.SHUTTING_DOWN:
@@ -56,35 +57,34 @@ class WorkersPool(BackgroundWorker):
 		while self._thread_state == ThreadState.RUNNING and len(self.__queue) == 0:
 			self._thread_worker_cv.wait()
 
-	def __wait_for_unpause(self):
-		while self._thread_state == ThreadState.PAUSING or self._thread_state == ThreadState.PAUSED:
-			self._thread_worker_cv.wait()
-
-	def __wait_for_running(self):
-		while self._thread_state == ThreadState.RESUMING:
-			self._thread_worker_cv.wait()
-
 	def _checkpoint(self):
 		with self._thread_mutex:
 			while True:
-				if self._thread_state == ThreadState.PAUSING:
-					self.__working_threads -= 1
-					if (self.__working_threads == 0):
-						self._thread_state = ThreadState.PAUSED
-						self._thread_control_cv.notify()
-					self.__wait_for_unpause()
-					continue
-				if self._thread_state == ThreadState.RESUMING:
-					self.__working_threads += 1
-					if (self.__working_threads == self.__num_of_threads):
-						self._thread_state = ThreadState.RUNNING
-						self._thread_control_cv.notify()
-					self.__wait_for_running()
-					continue
+				if self._thread_state == ThreadState.RUNNING:
+					return ThreadState.RUNNING
 				if self._thread_state == ThreadState.SHUTTING_DOWN:
 					return ThreadState.SHUTTING_DOWN
+				if self._thread_state == ThreadState.PAUSED:
+					self._wait_for_new_state(self._thread_worker_cv)
+					continue
+				if self._thread_state == ThreadState.PAUSING:
+					self.__running_threads -= 1
+					if (self.__running_threads == 0):
+						self._thread_state = ThreadState.PAUSED
+						self._thread_control_cv.notify()
+					else:
+						self._wait_for_new_state(self._thread_worker_cv)
+					continue
+				if self._thread_state == ThreadState.RESUMING:
+					self.__running_threads += 1
+					if (self.__running_threads == self.__num_of_threads):
+						self._thread_state = ThreadState.RUNNING
+						self._thread_control_cv.notify()
+					else:
+						self._wait_for_new_state(self._thread_worker_cv)
+					continue
 				break
-			verify(self._thread_state == ThreadState.RUNNING, "Thread from %r should be running after checkpoint: %r" % (self.__pool_name, self._thread_state))
+			verify(False, "Invalid thread state %r in checkpoint for thread from %r" % (self._thread_state, self.__pool_name))
 			return self._thread_state
 
 	def join(self):
@@ -108,7 +108,7 @@ class WorkersPool(BackgroundWorker):
 
 	def _set_shutdown(self):
 		with self._thread_mutex:
-			self.__working_threads -= 1
-			if self.__working_threads == 0:
+			self.__alive_threads -= 1
+			if self.__alive_threads == 0:
 				self._thread_state = ThreadState.SHUT_DOWN
 				self._thread_control_cv.notify()

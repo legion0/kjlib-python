@@ -51,19 +51,21 @@ class AppDirs(object):
 
 	@staticmethod
 	def __get_app_name():
-		try:
-			import __main__
-			return os.path.splitext(os.path.basename(__main__.__file__))[0];
-		except ImportError:
-			return "python_interpreter"
+		import __main__
+		if hasattr(__main__, "__file__"):
+			app_name = os.path.splitext(os.path.basename(__main__.__file__))[0]
+		else:
+			app_name = "python_interpreter"
+		return app_name
 
 	@staticmethod
 	def __get_app_dir():
-		try:
-			import __main__
-			return os.path.dirname(__main__.__file__);
-		except ImportError:
-			return os.getcwd()
+		import __main__
+		if hasattr(__main__, "__file__"):
+			app_dir = os.path.dirname(__main__.__file__)
+		else:
+			app_dir = os.getcwd()
+		return app_dir
 
 	@staticmethod
 	def __get_user_dir():
