@@ -1,14 +1,15 @@
 from datetime import datetime
 from glob import glob
-import inspect
 from json import dumps as json_dumps
+import inspect
 import os
 import sys
-
-from kjlib.app_dirs import AppDirs
+import threading
 import time
 
-_frame_to_inspect = 5
+from kjlib.app_dirs import AppDirs
+
+_frame_to_inspect = 4
 
 def _get_caller_info(frame_to_inspect):
 	stack = inspect.stack()
@@ -23,13 +24,16 @@ def _get_caller_info(frame_to_inspect):
 	}
 	return caller_info
 
-def _compose_log_msg(msg_text, log_level, frame_to_inspect = _frame_to_inspect):
+def _compose_log_msg(msg_text, kwargs, log_level, frame_to_inspect = _frame_to_inspect):
 	log_obj = _get_caller_info(frame_to_inspect)
 	log_obj["time"] = time.time()
 	log_obj["level"] = log_level
 	log_level_name = Logger._log_level_name(log_level)
 	log_obj["level_str"] = log_level_name
 	log_obj["msg_text"] = str(msg_text)
+	log_obj["pid"] = os.getpid()
+	log_obj["tid"] = threading.current_thread().ident
+	log_obj["args"] = kwargs
 	return log_obj
 
 def _format_log_msg(log_obj):
@@ -98,24 +102,32 @@ class Logger(object):
 	def set_print_level(self, log_level):
 		self.__print_level = log_level
 
-	def f(self, msg=""):
-		self.__printerr(msg, self.FATAL)
-	def e(self, msg=""):
-		self.__printerr(msg, self.ERROR)
-	def w(self, msg=""):
-		self.__printerr(msg, self.WARN)
-	def i(self, msg=""):
-		self.__println(msg, self.INFO)
-	def v(self, msg=""):
-		self.__println(msg, self.VERBOSE)
-	def d(self, msg=""):
-		self.__println(msg, self.DEBUG)
-	def d2(self, msg=""):
-		self.__println(msg, self.DEBUG2)
-	def d3(self, msg=""):
-		self.__println(msg, self.DEBUG3)
+	def f(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.FATAL)
+		self.__log(log_obj)
+	def e(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.ERROR)
+		self.__log(log_obj)
+	def w(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.WARN)
+		self.__log(log_obj)
+	def i(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.INFO)
+		self.__log(log_obj)
+	def v(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.VERBOSE)
+		self.__log(log_obj)
+	def d(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.DEBUG)
+		self.__log(log_obj)
+	def d2(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.DEBUG2)
+		self.__log(log_obj)
+	def d3(self, msg_text="", **kwargs):
+		log_obj = _compose_log_msg(msg_text, kwargs, self.DEBUG3)
+		self.__log(log_obj)
 
-	def __println(self, msg, log_level):
+	def __print(self, msg, log_level, **kwargs):
 		self.__log(msg, log_level)
 		if log_level <= self.__print_level:
 			print msg
@@ -124,19 +136,19 @@ class Logger(object):
 		log_msg = _format_log_msg(log_obj)
 		print >> file_, log_msg
 
-	def __log(self, msg_text, log_level):
-		log_obj = _compose_log_msg(msg_text, log_level, )
-		
-		log_msg = _format_log_msg(log_obj)
-
+	def __log(self, log_obj):
 		with open(self._log_file_path, "a") as f:
-			print >> f, log_msg
+			self._log_msg(log_obj, f)
 
-	def __printerr(self, msg, log_level):
-		self.__log(msg, log_level)
+		log_level = log_obj["level"]
+		printed_msg = log_obj["msg_text"]
 		if log_level <= self.__print_level:
-			log_level_name = Logger._log_level_name(log_level)
-			print >> sys.stderr, "%s: %s" % (log_level_name, msg)
+			if log_level <= self.WARN:
+				log_level_name = Logger._log_level_name(log_level)
+				printed_msg = "%s: %s" % (log_level_name, printed_msg)
+				print >> sys.stderr, printed_msg
+			else:
+				print printed_msg
 
 	def __rotate_file(self, file_path):
 		if os.path.exists(file_path):

@@ -40,6 +40,9 @@ class AppDirs(object):
 	def data(self, location = USER_DIR, storage = APP_STORAGE):
 		return self.__build_path("data", location, storage)
 
+	def config(self, location = USER_DIR, storage = APP_STORAGE):
+		return self.__build_path("config", location, storage)
+
 	def __build_path(self, type_, location, storage):
 		location_path = self._location_map[location]
 		path = os.path.join(location_path, ".%s" % type_)

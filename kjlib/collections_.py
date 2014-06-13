@@ -1,6 +1,13 @@
 from collections import MutableSet, OrderedDict
 import sys
 
+from kjlib.functional import identity_function
+
+def find_in_list(list_, predicate, parser=identity_function, default=None):
+	for item in list_:
+		if predicate(item):
+			return parser(item)
+	return default
 
 class HashableOrderedDict(OrderedDict):
 	def __hash__(self):
