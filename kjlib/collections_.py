@@ -1,6 +1,7 @@
 from collections import MutableSet, OrderedDict
 import sys
 
+
 class HashableOrderedDict(OrderedDict):
 	def __hash__(self):
 		for key, value in self.iteritems():
@@ -67,7 +68,7 @@ class OrderedSet(MutableSet):
 		return set(self) == set(other)
 
 
-def _test(argv):
+def __test(argv):
 	s = OrderedSet('abracadaba')
 	t = OrderedSet('simsalabim')
 	print(s | t)
@@ -75,4 +76,4 @@ def _test(argv):
 	print(s - t)
 
 if __name__ == '__main__':
-	_test(sys.argv[1:])
+	__test(sys.argv[1:])

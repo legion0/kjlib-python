@@ -1,4 +1,4 @@
-from kjlib.mycollections import OrderedSet
+from kjlib.collections_ import OrderedSet
 
 _classes = OrderedSet()
 

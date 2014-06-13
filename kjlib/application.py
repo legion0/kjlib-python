@@ -35,7 +35,7 @@ else:
 	_app_major_minor_version = '0.0'
 
 HOME_DIR = os.getenv('USERPROFILE') or os.path.expanduser("~")  # prefer windows USERPROFILE for windows/cygwin mixes
-LOG_DIR = os.path.join(HOME_DIR, ".logs", _app_name)
+__LOG_DIR = os.path.join(HOME_DIR, ".logs", _app_name)
 CACHE_DIR = os.path.join(HOME_DIR, ".cache", _app_name)
 
 CONFIG_DIR = os.path.join(HOME_DIR, ".config", _app_name)
@@ -56,11 +56,11 @@ else:
 	CACHE_DIR = os.path.join(CACHE_DIR, _app_major_minor_version)
 
 if hasattr(__main__, "__LOG_VERSION__"):
-	LOG_DIR = os.path.join(LOG_DIR, getattr(__main__, "__LOG_VERSION__"))
+	__LOG_DIR = os.path.join(__LOG_DIR, getattr(__main__, "__LOG_VERSION__"))
 else:
-	LOG_DIR = os.path.join(LOG_DIR, _app_major_minor_version)
+	__LOG_DIR = os.path.join(__LOG_DIR, _app_major_minor_version)
 
-for dir_path in (CONFIG_DIR, DATA_DIR, CACHE_DIR, LOG_DIR):
+for dir_path in (CONFIG_DIR, DATA_DIR, CACHE_DIR, __LOG_DIR):
 	if not os.path.exists(dir_path):
 		os.makedirs(dir_path)
 

@@ -1,86 +1,70 @@
 import os
-import inspect
 
-APP_DIR = 0
-USER_DIR = 1
+from kjlib.inspect_ import get_calling_module_name
 
-APP_STORAGE = 0
-MODULE_STORAGE = 1
-GLOBAL_MODULE_STORAGE = 2
 
 ################################################################################
 
-_NO_VALUE = []
+class AppDirs(object):
+	APP_DIR = "APP_DIR"
+	USER_DIR = "USER_DIR"
+	
+	APP_STORAGE = "APP_STORAGE"
+	MODULE_STORAGE = "MODULE_STORAGE"
+	GLOBAL_MODULE_STORAGE = "GLOBAL_MODULE_STORAGE"
 
-def _get_app_name():
-	try:
-		import __main__
-		return os.path.splitext(os.path.basename(__main__.__file__))[0];
-	except ImportError:
-		return "python_interpreter"
+	@staticmethod
+	def mkdir(path):
+		if not os.path.exists(path):
+			os.makedirs(path)
 
-def _get_app_dir():
-	try:
-		import __main__
-		return os.path.dirname(__main__.__file__);
-	except ImportError:
-		return os.getcwd()
-
-def _get_user_dir():
-	return os.getenv('USERPROFILE') or os.path.expanduser("~")
-
-def _get_calling_module_name():
-	stack = inspect.stack()
-	frame = stack[2]
-	module = inspect.getmodule(frame[0])
-	module_name = module.__name__
-	return module_name
-
-################################################################################
-
-def mkdir(path):
-	if not os.path.exists(path):
-		os.makedirs(path)
-
-class AppDirs:
-	def __init__(self, app_name = _NO_VALUE, user_dir = _NO_VALUE, module_name = _NO_VALUE):
-		self._app_name = app_name if app_name != _NO_VALUE else _get_app_name()
-		self._user_dir = user_dir if user_dir != _NO_VALUE else _get_user_dir()
-		self._module_name = module_name if module_name != _NO_VALUE else _get_calling_module_name()
-		self._app_dir = _get_app_dir()
+	__NO_VALUE = []
+	
+	def __init__(self, app_name = __NO_VALUE, user_dir = __NO_VALUE, module_name = __NO_VALUE):
+		self._app_name = app_name if app_name != AppDirs.__NO_VALUE else AppDirs.__get_app_name()
+		self._user_dir = user_dir if user_dir != AppDirs.__NO_VALUE else AppDirs.__get_user_dir()
+		self._module_name = module_name if module_name != AppDirs.__NO_VALUE else get_calling_module_name()
+		self._app_dir = AppDirs.__get_app_dir()
 
 		self._location_map = {
-			APP_DIR: self._app_dir,
-			USER_DIR: self._user_dir,
+			AppDirs.APP_DIR: self._app_dir,
+			AppDirs.USER_DIR: self._user_dir,
 		}
 
 	def logs(self, location = USER_DIR, storage = APP_STORAGE):
-		return self._build_path("logs", location, storage)
+		return self.__build_path("logs", location, storage)
 
 	def cache(self, location = USER_DIR, storage = APP_STORAGE):
-		return self._build_path("cache", location, storage)
+		return self.__build_path("cache", location, storage)
 
 	def data(self, location = USER_DIR, storage = APP_STORAGE):
-		return self._build_path("data", location, storage)
+		return self.__build_path("data", location, storage)
 
-	def _build_path(self, type_, location, storage):
+	def __build_path(self, type_, location, storage):
 		location_path = self._location_map[location]
 		path = os.path.join(location_path, ".%s" % type_)
-		if location != APP_DIR and storage != GLOBAL_MODULE_STORAGE:
+		if location != AppDirs.APP_DIR and storage != AppDirs.GLOBAL_MODULE_STORAGE:
 			path = os.path.join(path, self._app_name)
-		if storage in (MODULE_STORAGE, GLOBAL_MODULE_STORAGE):
+		if storage in (AppDirs.MODULE_STORAGE, AppDirs.GLOBAL_MODULE_STORAGE):
 			path = os.path.join(path, self._module_name)
 		return path
 
-################################################################################
+	@staticmethod
+	def __get_app_name():
+		try:
+			import __main__
+			return os.path.splitext(os.path.basename(__main__.__file__))[0];
+		except ImportError:
+			return "python_interpreter"
 
-def tester():
-	app_dirs = AppDirs()
-	print app_dirs.logs()
-	print app_dirs.logs(storage=MODULE_STORAGE)
-	print app_dirs.logs(storage=GLOBAL_MODULE_STORAGE)
-	print app_dirs.logs(location=APP_DIR)
-	print app_dirs.logs(location=APP_DIR, storage=MODULE_STORAGE)
+	@staticmethod
+	def __get_app_dir():
+		try:
+			import __main__
+			return os.path.dirname(__main__.__file__);
+		except ImportError:
+			return os.getcwd()
 
-if __name__ == "__main__":
-	tester()
+	@staticmethod
+	def __get_user_dir():
+		return os.getenv('USERPROFILE') or os.path.expanduser("~")

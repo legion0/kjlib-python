@@ -3,120 +3,112 @@ from glob import glob
 import os
 import sys
 
-import app_dirs
+from kjlib.app_dirs import AppDirs
 
+class Logger(object):
+	QUIET   = 0
+	FATAL   = 1
+	ERROR   = 2
+	WARN    = 3
+	INFO    = 4
+	VERBOSE = 5
+	DEBUG   = 6
+	DEBUG2  = 7
+	DEBUG3  = 8
 
-application_dirs = app_dirs.AppDirs()
-LOG_DIR = application_dirs.logs()
-app_dirs.mkdir(LOG_DIR)
-
-stdall_fpath = os.path.join(LOG_DIR, "stdall")
-stdout_fpath = os.path.join(LOG_DIR, "stdout")
-stderr_fpath = os.path.join(LOG_DIR, "stderr")
-
-def rotate_file(file_path, retain=None):
-	if os.path.exists(file_path):
-		ctime = datetime.fromtimestamp((os.path.getmtime(file_path)))
-		ts = ctime.strftime("%Y%m%d_%H%M%S")
-		backup_path = "%s_%s" % (file_path, ts)
-		os.rename(file_path, backup_path)
-	with open(file_path, "w"):
-		pass
-	if retain is not None:
-		old_files = sorted(glob(file_path + "*"))[1:-retain]
-		for old_file in old_files:
-			os.remove(old_file)
-
-for fpath in (stdout_fpath, stderr_fpath, stdall_fpath):
-	rotate_file(fpath, retain=30)
-
-class Logger:
-	QUIET = 0
-	FATAL = 1
-	ERROR = 2
-	INFO = 3
-	VERBOSE = 4
-	DEBUG = 5
-	DEBUG2 = 6
-	DEBUG3 = 7
-
-	_LOG_LEVEL_TO_STRING = {
-		0: 'QUIET',
-		1: 'FATAL',
-		2: 'ERROR',
-		3: 'INFO',
-		4: 'VERBOSE',
-		5: 'DEBUG',
-		6: 'DEBUG2',
-		7: 'DEBUG3',
+	__LOG_LEVEL_TO_STRING = {
+		0: 'QUIET'  ,
+		1: 'FATAL'  ,
+		2: 'ERROR'  ,
+		3: 'WARN'   ,
+		4: 'INFO'   ,
+		5: 'VERBOSE',
+		6: 'DEBUG'  ,
+		7: 'DEBUG2' ,
+		8: 'DEBUG3' ,
 	}
 
+	__MAX_WIDTH = max([len(x) for x in __LOG_LEVEL_TO_STRING.values()])
+	__LOG_TEMPLATE = "%%-%ds | %%s" % __MAX_WIDTH
+
 	@staticmethod
-	def _get_log_level_name(log_level):
-		return Logger._LOG_LEVEL_TO_STRING[log_level]
+	def __get_log_level_name(log_level):
+		return Logger.__LOG_LEVEL_TO_STRING[log_level]
 # 
-# 	@staticmethod
-# 	def get_value(name):
-# 		value = 3
-# 		for v, n in DebugTools.DEBUG_LEVEL.STRINGS.iteritems():
-# 			if n == name:
-# 				value = v
-# 		return value
+	__instance = None
+	@staticmethod
+	def instance(*args, **kwargs):
+		if Logger.__instance is None:
+			Logger.__instance = Logger(*args, **kwargs)
+		return Logger.__instance
 
-	_print_level = INFO
-	_MAX_WIDTH = max([len(x) for x in _LOG_LEVEL_TO_STRING.values()])
-	_LOG_TEMPLATE = "%%-%ds | %%s" % _MAX_WIDTH
+	def __init__(self, log_dir=None, retain=30, print_level=INFO):
+# 		from kjlib.app_dirs import AppDirs
+		self.__app_dirs = AppDirs()
 
-	@staticmethod
-	def set_print_level(log_level):
-		_print_level = log_level
+		self.__log_dir = log_dir
 
-	@staticmethod
-	def f(msg=""):
-		Logger._printerr(msg, Logger.FATAL)
-	@staticmethod
-	def e(msg=""):
-		Logger._printerr(msg, Logger.ERROR)
-	@staticmethod
-	def i(msg=""):
-		Logger._println(msg, Logger.INFO)
-	@staticmethod
-	def v(msg=""):
-		Logger._println(msg, Logger.VERBOSE)
-	@staticmethod
-	def d(msg=""):
-		Logger._println(msg, Logger.DEBUG)
-	@staticmethod
-	def d2(msg=""):
-		Logger._println(msg, Logger.DEBUG2)
-	@staticmethod
-	def d3(msg=""):
-		Logger._println(msg, Logger.DEBUG3)
+		if self.__log_dir is None:
+			self.__LOG_DIR = self.__app_dirs.logs()
+		AppDirs.mkdir(self.__LOG_DIR)
 
-	@staticmethod	
-	def _println(msg, log_level):
-		Logger._log(msg, log_level)
-		if log_level <= Logger._print_level:
+		self.__retain = retain
+	
+		self.__stdall_file_path = os.path.join(self.__LOG_DIR, "stdall")
+		self.__stdout_file_path = os.path.join(self.__LOG_DIR, "stdout")
+		self.__stderr_file_path = os.path.join(self.__LOG_DIR, "stderr")
+
+		for file_path in (self.__stdout_file_path, self.__stderr_file_path, self.__stdall_file_path):
+			self.__rotate_file(file_path)
+
+		self.__print_level = print_level
+
+	def set_print_level(self, log_level):
+		self.__print_level = log_level
+
+	def f(self, msg=""):
+		self.__printerr(msg, self.FATAL)
+	def e(self, msg=""):
+		self.__printerr(msg, self.ERROR)
+	def w(self, msg=""):
+		self.__printerr(msg, self.WARN)
+	def i(self, msg=""):
+		self.__println(msg, self.INFO)
+	def v(self, msg=""):
+		self.__println(msg, self.VERBOSE)
+	def d(self, msg=""):
+		self.__println(msg, self.DEBUG)
+	def d2(self, msg=""):
+		self.__println(msg, self.DEBUG2)
+	def d3(self, msg=""):
+		self.__println(msg, self.DEBUG3)
+
+	def __println(self, msg, log_level):
+		self.__log(msg, log_level)
+		if log_level <= self.__print_level:
 			print msg
 
-	@staticmethod	
-	def _log(msg, log_level):
-		log_level_name = Logger._get_log_level_name(log_level)
-		with open(stdout_fpath, "a") as f:
-			print >> f, Logger._LOG_TEMPLATE % (log_level_name, msg)
-		with open(stdall_fpath, "a") as f:
-			print >> f, Logger._LOG_TEMPLATE % (log_level_name, msg)
+	def __log(self, msg, log_level):
+		log_level_name = Logger.__get_log_level_name(log_level)
+		with open(self.__stdout_file_path, "a") as f:
+			print >> f, Logger.__LOG_TEMPLATE % (log_level_name, msg)
+		with open(self.__stdall_file_path, "a") as f:
+			print >> f, Logger.__LOG_TEMPLATE % (log_level_name, msg)
 
-	@staticmethod
-	def _printerr(msg, log_level):
-		Logger._log(msg, log_level)
-		if log_level <= Logger._print_level:
+	def __printerr(self, msg, log_level):
+		self.__log(msg, log_level)
+		if log_level <= self.__print_level:
 			print >> sys.stderr, msg
-# 
-# 	@staticmethod
-# 	def die(message=None, returncode=-1):
-# 		if returncode != 0:
-# 			DebugTools.printerr(message, DebugTools.DEBUG_LEVEL.FATAL)
-# 		else:
-# 			DebugTools.println(message, DebugTools.DEBUG_LEVEL.INFO)
-# 		exit(returncode)
+
+	def __rotate_file(self, file_path):
+		if os.path.exists(file_path):
+			ctime = datetime.fromtimestamp((os.path.getmtime(file_path)))
+			ts = ctime.strftime("%Y%m%d_%H%M%S")
+			backup_path = "%s_%s" % (file_path, ts)
+			os.rename(file_path, backup_path)
+		with open(file_path, "w"):
+			pass
+		if self.__retain is not None:
+			old_files = sorted(glob(file_path + "*"))[1:-self.__retain]
+			for old_file in old_files:
+				os.remove(old_file)

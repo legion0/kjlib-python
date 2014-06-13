@@ -1,6 +1,7 @@
 import imp
 import sys
 
+
 def import_non_local(name, custom_name=None):
 	custom_name = custom_name or name
 	f, pathname, desc = imp.find_module(name, sys.path[1:])
