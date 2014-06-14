@@ -8,16 +8,19 @@ import threading
 import time
 
 from kjlib.app_dirs import AppDirs
+from kjlib.inspect_ import get_calling_module_name
 
-_frame_to_inspect = 4
+_frame_to_inspect = 3
 
 def _get_caller_info(frame_to_inspect):
 	stack = inspect.stack()
 	frame = stack[frame_to_inspect]
 	frame_info = inspect.getframeinfo(frame[0])
 	module = inspect.getmodule(frame[0])
+	module_name = get_calling_module_name(module=module)
+
 	caller_info = {
-		"module_name": module.__name__,
+		"module_name": module_name,
 		"file_path": frame[1],
 		"line_number": frame[2],
 		"function_name": frame_info.function
@@ -28,7 +31,7 @@ def _compose_log_msg(msg_text, kwargs, log_level, frame_to_inspect = _frame_to_i
 	log_obj = _get_caller_info(frame_to_inspect)
 	log_obj["time"] = time.time()
 	log_obj["level"] = log_level
-	log_level_name = Logger._log_level_name(log_level)
+	log_level_name = Logger.log_level_name(log_level)
 	log_obj["level_str"] = log_level_name
 	log_obj["msg_text"] = str(msg_text)
 	log_obj["pid"] = os.getpid()
@@ -51,7 +54,7 @@ class Logger(object):
 	DEBUG2  = 7
 	DEBUG3  = 8
 
-	_LOG_LEVEL_TO_STRING = {
+	_LOG_LEVEL_TO_NAME = {
 		QUIET   : 'QUIET'  ,
 		FATAL   : 'FATAL'  ,
 		ERROR   : 'ERROR'  ,
@@ -63,7 +66,7 @@ class Logger(object):
 		DEBUG3  : 'DEBUG3' ,
 	}
 
-	_LOG_LEVEL_STRING_TO_VALUE = {
+	_LOG_LEVEL_NAME_TO_VALUE = {
 		'QUIET'  : QUIET  ,
 		'FATAL'  : FATAL  ,
 		'ERROR'  : ERROR  ,
@@ -74,6 +77,16 @@ class Logger(object):
 		'DEBUG2' : DEBUG2 ,
 		'DEBUG3' : DEBUG3 ,
 	}
+
+	@staticmethod
+	def log_level_choice():
+		return Logger._LOG_LEVEL_NAME_TO_VALUE.keys()
+	@staticmethod
+	def log_level_name_to_value(log_level_name):
+		return Logger._LOG_LEVEL_NAME_TO_VALUE[log_level_name]
+	@staticmethod
+	def log_level_name(log_level):
+		return Logger._LOG_LEVEL_TO_NAME[log_level]
 
 	__instance = None
 	@staticmethod
@@ -93,7 +106,7 @@ class Logger(object):
 		AppDirs.mkdir(self.__LOG_DIR)
 
 		self.__retain = retain
-	
+
 		self._log_file_path = os.path.join(self.__LOG_DIR, "log")
 		self.__rotate_file(self._log_file_path)
 
@@ -142,9 +155,14 @@ class Logger(object):
 
 		log_level = log_obj["level"]
 		printed_msg = log_obj["msg_text"]
+
+		printed_vars = " ".join(["%s=%r" % (key, value) for key, value in log_obj["args"].viewitems()])
+		if printed_vars != "":
+			printed_msg += " (%s)" % printed_vars
+
 		if log_level <= self.__print_level:
 			if log_level <= self.WARN:
-				log_level_name = Logger._log_level_name(log_level)
+				log_level_name = Logger.log_level_name(log_level)
 				printed_msg = "%s: %s" % (log_level_name, printed_msg)
 				print >> sys.stderr, printed_msg
 			else:
@@ -162,7 +180,3 @@ class Logger(object):
 			old_files = sorted(glob(file_path + "*"))[1:-self.__retain]
 			for old_file in old_files:
 				os.remove(old_file)
-
-	@staticmethod
-	def _log_level_name(log_level):
-		return Logger._LOG_LEVEL_TO_STRING[log_level]

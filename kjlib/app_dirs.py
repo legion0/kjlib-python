@@ -8,7 +8,7 @@ from kjlib.inspect_ import get_calling_module_name
 class AppDirs(object):
 	APP_DIR = "APP_DIR"
 	USER_DIR = "USER_DIR"
-	
+
 	APP_STORAGE = "APP_STORAGE"
 	MODULE_STORAGE = "MODULE_STORAGE"
 	GLOBAL_MODULE_STORAGE = "GLOBAL_MODULE_STORAGE"
@@ -19,7 +19,7 @@ class AppDirs(object):
 			os.makedirs(path)
 
 	__NO_VALUE = []
-	
+
 	def __init__(self, app_name = __NO_VALUE, user_dir = __NO_VALUE, module_name = __NO_VALUE):
 		self._app_name = app_name if app_name != AppDirs.__NO_VALUE else AppDirs.__get_app_name()
 		self._user_dir = user_dir if user_dir != AppDirs.__NO_VALUE else AppDirs.__get_user_dir()
@@ -45,7 +45,12 @@ class AppDirs(object):
 
 	def __build_path(self, type_, location, storage):
 		location_path = self._location_map[location]
-		path = os.path.join(location_path, ".%s" % type_)
+		type_path = type_
+		if location == AppDirs.USER_DIR:
+			type_path = ".%s" % type_
+		else:
+			type_path = type_
+		path = os.path.join(location_path, type_path)
 		if location != AppDirs.APP_DIR and storage != AppDirs.GLOBAL_MODULE_STORAGE:
 			path = os.path.join(path, self._app_name)
 		if storage in (AppDirs.MODULE_STORAGE, AppDirs.GLOBAL_MODULE_STORAGE):
