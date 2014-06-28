@@ -47,8 +47,9 @@ def main():
 				      colored("%s:" % level_str, log_color),
 				if msg["msg_text"] != "":
 					print msg["msg_text"],
-				for key, value in msg["args"].viewitems():
-					print "%s=%s" % (colored(key, 'cyan'), colored(repr(value), 'blue')),
+				vars_str = " ".join(["%s=%s" % (colored(key, 'cyan'), colored(repr(value), 'blue')) for key, value in msg["args"].viewitems()])
+				if vars_str:
+					print "(%s)" % vars_str,
 				print "<%s::%s::%d>" % (msg["module_name"], msg["function_name"], msg["line_number"])
 
 def read_log_msg(f, line_number):

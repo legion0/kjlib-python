@@ -4,26 +4,29 @@ import sys
 import time
 
 
-__logger = None
+__log = None
 
 def __import_logger():
-	global __logger
-	if __logger is None:
+	global __log
+	if __log is None:
 		from kjlib.logger import Logger
-		__logger = Logger.instance()
+		__log = Logger.instance()
 
-def die(msg="", exit_code=1):
+def die(msg="", exit_code=1, **kwargs):
 	__import_logger()
+	if not "logger_skip_frames" in kwargs:
+		kwargs["logger_skip_frames"] = 1
 	if exit_code != 0:
-		__logger.f(msg)
+		__log.f(msg, **kwargs)
 		os._exit(exit_code)
 	else:
-		__logger.i(msg)
+		__log.i(msg, **kwargs)
 		exit(exit_code)
 
-def verify(condition, msg, exit_code=1):
+def verify(condition, msg, exit_code=1, **kwargs):
+	kwargs["logger_skip_frames"] = 2
 	if not condition:
-		die(msg, exit_code)
+		die(msg, exit_code, **kwargs)
 
 try:
 	import jsbeautifier
@@ -44,7 +47,7 @@ def dump(o):
 def pause(msg="Pausing for %r seconds, press Ctrl+C to continue.", seconds=sys.maxint):
 	__import_logger()
 	if msg is not None:
-		__logger.i(msg)
+		__log.i(msg)
 	try:
 		time.sleep(seconds)
 	except KeyboardInterrupt:

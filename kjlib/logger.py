@@ -20,14 +20,20 @@ def _get_caller_info(frame_to_inspect):
 	module_name = get_calling_module_name(module=module)
 
 	caller_info = {
-		"module_name": module_name,
-		"file_path": frame[1],
-		"line_number": frame[2],
-		"function_name": frame_info.function
+		"module_name"   : module_name,
+		"file_path"     : frame_info.filename,
+		"line_number"   : frame_info.lineno,
+		"function_name" : frame_info.function,
+		"line_content"  : frame_info.code_context[0].strip(),
 	}
 	return caller_info
 
 def _compose_log_msg(msg_text, kwargs, log_level, frame_to_inspect = _frame_to_inspect):
+
+	if "logger_skip_frames" in kwargs:
+		frame_to_inspect += kwargs["logger_skip_frames"]
+		del kwargs["logger_skip_frames"]
+	
 	log_obj = _get_caller_info(frame_to_inspect)
 	log_obj["time"] = time.time()
 	log_obj["level"] = log_level
@@ -42,6 +48,28 @@ def _compose_log_msg(msg_text, kwargs, log_level, frame_to_inspect = _frame_to_i
 def _format_log_msg(log_obj):
 	return json_dumps(log_obj)
 
+def _format_fatal_msg(log_obj):
+	vars_str = " ".join(["%s=%r" % (key, value) for key, value in log_obj["args"].viewitems()])
+	if vars_str:
+		vars_str = "(%s) " % vars_str
+	return "[%s] %s %s<%s:%d>" % (
+		log_obj["line_content"],
+		log_obj["msg_text"],
+		vars_str,
+		log_obj["file_path"],
+		log_obj["line_number"]
+	)
+
+def _format_debug_msg(log_obj):
+	vars_str = " ".join(["%s=%r" % (key, value) for key, value in log_obj["args"].viewitems()])
+	if vars_str:
+		vars_str = "(%s) " % vars_str
+	return "%s %s<%s:%s>" % (
+		log_obj["msg_text"],
+		vars_str,
+		log_obj["module_name"],
+		log_obj["function_name"]
+	)
 
 class Logger(object):
 	QUIET   = 0
@@ -140,11 +168,6 @@ class Logger(object):
 		log_obj = _compose_log_msg(msg_text, kwargs, self.DEBUG3)
 		self.__log(log_obj)
 
-	def __print(self, msg, log_level, **kwargs):
-		self.__log(msg, log_level)
-		if log_level <= self.__print_level:
-			print msg
-
 	def _log_msg(self, log_obj, file_):
 		log_msg = _format_log_msg(log_obj)
 		print >> file_, log_msg
@@ -154,19 +177,26 @@ class Logger(object):
 			self._log_msg(log_obj, f)
 
 		log_level = log_obj["level"]
-		printed_msg = log_obj["msg_text"]
-
-		printed_vars = " ".join(["%s=%r" % (key, value) for key, value in log_obj["args"].viewitems()])
-		if printed_vars != "":
-			printed_msg += " (%s)" % printed_vars
-
 		if log_level <= self.__print_level:
-			if log_level <= self.WARN:
-				log_level_name = Logger.log_level_name(log_level)
-				printed_msg = "%s: %s" % (log_level_name, printed_msg)
-				print >> sys.stderr, printed_msg
-			else:
-				print printed_msg
+
+			printed_msg = log_obj["msg_text"]
+
+			if self.__print_level >= self.DEBUG:
+				if log_level <= self.FATAL:
+					printed_msg = _format_fatal_msg(log_obj)
+				else:
+					printed_msg = _format_debug_msg(log_obj)
+
+			if printed_msg:
+				if log_level <= self.WARN or self.__print_level >= self.DEBUG:
+					max_log_level_width = max([len(x) for x in Logger.log_level_choice()])
+					level_str = log_obj["level_str"] + (" " * (max_log_level_width - len(log_obj["level_str"])))
+					
+					printed_msg = "%s: %s" % (level_str, printed_msg)
+				if log_level <= self.WARN:
+					print >> sys.stderr, printed_msg
+				else:
+					print printed_msg
 
 	def __rotate_file(self, file_path):
 		if os.path.exists(file_path):
