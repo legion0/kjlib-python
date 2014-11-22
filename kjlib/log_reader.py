@@ -20,10 +20,9 @@ def parse_args():
 __TIME_FORMAT = "%Y/%m/%d %H:%M:%S.%f"
 
 def main():
-	log_level_choices = Logger._LOG_LEVEL_TO_NAME.values()
 	max_log_level_width = max([len(x) for x in log_level_choices])
 
-	args = parse_args(log_level_choices)
+	args = parse_args()
 	log_file = args.log_file
 	max_log_level = Logger.log_level_name_to_value(args.log_level)
 
